@@ -10,7 +10,7 @@ public class JavaFormClass {
 		
 		int y = x + 1;
 		
-		ArrayList<String> variableNames = new ArrayList<>();
+//		ArrayList<String> variableNames = new ArrayList<>();
 //		variableNames.add("something");
 //		variableNames.add("ext_vertrag");
 //		
