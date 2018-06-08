@@ -9,8 +9,8 @@ import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.camunda.bpm.engine.test.ProcessEngineRule;
 
-import delegateBean.Person;
-import delegateBean.ProcessConstants;
+import delegateBean.beans.Person;
+import delegateBean.beans.ProcessConstants;
 
 public class SimpleDelegateExample implements JavaDelegate {
 
@@ -30,10 +30,11 @@ public class SimpleDelegateExample implements JavaDelegate {
 
 			final String vertrag = "vsnr";
 
+			
 			String example = "Beispiel";
 			example = example + "2";
 			
-			execution.setVariable(vertrag, "smt");
+			execution.getVariable(vertrag);
 
 			if (a == 1) {
 

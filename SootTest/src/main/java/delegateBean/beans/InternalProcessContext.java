@@ -1,4 +1,4 @@
-package delegateBean;
+package delegateBean.beans;
 
 import java.util.ArrayList;
 import java.util.List;

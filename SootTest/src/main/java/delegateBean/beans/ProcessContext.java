@@ -1,4 +1,4 @@
-package delegateBean;
+package delegateBean.beans;
 
 import org.camunda.bpm.engine.delegate.VariableScope;
 

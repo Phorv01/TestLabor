@@ -6,7 +6,7 @@ import java.util.List;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
 
-import delegateBean.ProcessContext;
+import delegateBean.beans.ProcessContext;
 
 public class CreateCollectionDelegate implements JavaDelegate {
 

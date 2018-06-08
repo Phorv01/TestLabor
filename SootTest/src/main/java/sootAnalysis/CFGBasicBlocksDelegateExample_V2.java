@@ -123,6 +123,11 @@ public class CFGBasicBlocksDelegateExample_V2 {
 		return visitedBoxOut;
 	}
 
+	/**
+	 * 
+	 * @param block
+	 * @return
+	 */
 	public static List<String> blockIteraror(Block block) {
 
 		List<String> functions = new ArrayList<String>();

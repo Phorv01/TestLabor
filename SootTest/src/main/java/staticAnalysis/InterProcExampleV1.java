@@ -1,7 +1,6 @@
-package sootAnalysis;
+package staticAnalysis;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -23,18 +22,12 @@ import soot.jimple.InvokeStmt;
 import soot.jimple.internal.JInterfaceInvokeExpr;
 import soot.jimple.toolkits.callgraph.CallGraph;
 import soot.jimple.toolkits.callgraph.Edge;
-import soot.jimple.toolkits.callgraph.Sources;
 import soot.options.Options;
 import soot.toolkits.graph.Block;
 import soot.toolkits.graph.BlockGraph;
-import soot.toolkits.graph.BriefUnitGraph;
 import soot.toolkits.graph.ClassicCompleteBlockGraph;
-import soot.toolkits.graph.ExceptionalUnitGraph;
-import soot.toolkits.graph.SimpleDominatorsFinder;
-import soot.toolkits.graph.UnitGraph;
-import soot.util.Chain;
 
-public class CFGBasicBlocksDelegateExample {
+public class InterProcExampleV1 {
 
 	public static void main(String[] args) // throws IOException
 	{
@@ -53,24 +46,24 @@ public class CFGBasicBlocksDelegateExample {
 
 		Options.v().set_whole_program(true);
 		Options.v().set_allow_phantom_refs(true);
-	
-		
+
 		classFetcher("delegateExamples.SimpleDelegateExample", "execute");
 
 	}
 
-	public static void classFetcher(String className, String methodName) {		
+	public static void classFetcher(String className, String methodName) {
 
+		
+		
 		SootClass c = Scene.v().forceResolve("delegateExamples.SimpleDelegateExample", SootClass.SIGNATURES);
 		c.setApplicationClass();
-		Scene.v().loadNecessaryClasses();
 
 		Scene.v().loadNecessaryClasses();
 		SootMethod method = c.getMethodByName(methodName);
 		Body b = method.retrieveActiveBody();
-		
+
 		// Build the CFG and run the analysis
-		BlockGraph g = new ClassicCompleteBlockGraph(b);
+	   final BlockGraph g = new ClassicCompleteBlockGraph(b);
 		System.out.println(g);
 
 		List entryPoints = new ArrayList();
@@ -79,129 +72,102 @@ public class CFGBasicBlocksDelegateExample {
 		PackManager.v().runPacks();
 		CallGraph cg = Scene.v().getCallGraph();
 
-
-		// Map<String, Integer> functions = new HashMap<String, Integer>();
-		// functions.put("setVariable", 1);
-
 		List<Block> graphTails = g.getTails();
 		List<Block> graphHeads = g.getHeads();
 
+		OutSet oldOutSet = new OutSet(0, new ArrayList<VariableBlock>());
+		OutSet newOutSet = new OutSet(0, new ArrayList<VariableBlock>());
+
+		 do {
+		 oldOutSet = newOutSet;
 		for (Block head : graphHeads) {
-			graphIterator(cg, g, head, graphTails, null);
+			newOutSet = graphIterator(cg, g, head, graphTails, oldOutSet);
 
 		}
+		 } while(!newOutSet.equals(oldOutSet));
 	}
 
 	/**
 	 * 
+	 * @param cg
 	 * @param graph
 	 * @param head
 	 * @param blockTails
-	 * @param visitedBoxOut
-	 *            - keep track of already visited Blocks and their OUT for data-flow
-	 *            analytics logic
+	 * @param OutSets
 	 */
-	public static void graphIterator(CallGraph cg, BlockGraph graph, Block head, List<Block> blockTails,
+	public static OutSet graphIterator(CallGraph cg, final BlockGraph graph, Block head, List<Block> blockTails,
 			OutSet OutSets) {
-		
+
 		OutSet InSet = new OutSet(1, new ArrayList<VariableBlock>());
-		
+
 		for (Block b : graph.getBlocks()) {
-			
-			if(!b.equals(head)) {				
-							
+
+			if (!b.equals(head)) {
+
 				List<Block> predecessors = graph.getPredsOf(b);
-				for(Block p : predecessors) {
-					if(OutSets != null) {
-					InSet.addVariableBlock(OutSets.getVariableBlock(p));}
-				}				
-			}			
-			
+				for (Block p : predecessors) {
+					if (OutSets != null) {
+						InSet.addVariableBlock(OutSets.getVariableBlock(p));
+					}
+				}
+			}
+
 			// Collect the functions Unit by Unit via the blockIterator
-			VariableBlock vb = blockIteraror(cg, head, InSet);
+			VariableBlock vb = blockIteraror(cg, b, InSet);
 			InSet.addVariableBlock(vb);
 		}
-		
-		System.out.println(InSet);
-		
 
-//		HashMap<Block, List<String>> newOut = new HashMap<Block, List<String>>();
-//		newOut.put(head, resultFunctions);
-//
-//		// Iterate through the successors of the Block, but with DFA logic restrictions
-//		// for avoiding infinite loops
-//		// while(change to any OUT occur)
-//		for (Block s : successors) {
-//			// Check if th
-//			if (!visitedBoxOut.containsKey(s)) {
-//				visitedBoxOut.putAll(newOut);
-//				graphIterator(cg, graph, s, blockTails, visitedBoxOut);
-//			}
-//			// when certain block was already visited
-//			else {
-//				List<String> b1 = newOut.get(head);
-//				List<String> b2 = visitedBoxOut.get(head);
-//				if (!newOut.get(head).equals(visitedBoxOut.get(head))) {
-//					// do not put block and value again, just add the new functions to the old list
-//					// og that particular block
-//					visitedBoxOut.putAll(newOut);
-//					graphIterator(cg, graph, s, blockTails, visitedBoxOut);
-//				} else {
-//					visitedBoxOut.putAll(newOut);
-//				}
-//			}
-//
-//		}
-//
-//		if (blockTails.contains(head)) {
-//			visitedBoxOut.putAll(newOut);
-//		}
-//		System.out.println(visitedBoxOut);
+		System.out.println(InSet);
+
+		return InSet;
 	}
 
 	public static VariableBlock blockIteraror(CallGraph cg, Block block, OutSet InSet) {
-		
+
 		VariableBlock variableBlock = new VariableBlock(block, new ArrayList<ProcessVariable>());
 		Set<String> packages = new HashSet<String>();
 		packages.add("delegateBean/beans/ProcessContext");
-		
+
 		List<String> functions = new ArrayList<String>();
 
-		Iterator unitIt = block.iterator();
+		Iterator<Unit> unitIt = block.iterator();
 		while (unitIt.hasNext()) {
-			Unit unit = (Unit) unitIt.next();
+			Unit unit = unitIt.next();
+			System.out.println(unit);
 			if (unit instanceof AssignStmt || unit instanceof InvokeStmt) {
 
 				if (unit instanceof InvokeStmt) {
 
-					System.out.println(cg.edgesOutOf(unit));
-					Iterator<soot.jimple.toolkits.callgraph.Edge> sources = cg.edgesOutOf(unit);
-
-					while (sources.hasNext()) {
-						Edge src = (Edge) sources.next();
-						String methodName = src.tgt().getName();
-
-						String className = src.tgt().getDeclaringClass().getName();
-						String packageName = src.tgt().getDeclaringClass().getPackageName() + "/" + className;
-						className = className.replace(".", "/");
-						System.out.println(className);
-						if(packages.contains(className)) {
-							G.reset();
-							classFetcher(className, methodName);
-						}
-					}
+//					 System.out.println(cg.edgesOutOf(unit));
+					 Iterator<soot.jimple.toolkits.callgraph.Edge> sources = cg.edgesOutOf(unit);
+					
+					 while (sources.hasNext()) {
+					 Edge src = (Edge) sources.next();
+					 String methodName = src.tgt().getName();
+					
+					 String className = src.tgt().getDeclaringClass().getName();
+					 String packageName = src.tgt().getDeclaringClass().getPackageName() + "/" +
+					 className;
+					 className = className.replace(".", "/");
+//					 System.out.println(className);
+					 if(packages.contains(className)) {
+					 G.reset();
+					 classFetcher(className, methodName);
+					 }
+					 }
 
 					if (((InvokeStmt) unit).getInvokeExprBox().getValue() instanceof JInterfaceInvokeExpr) {
 
 						JInterfaceInvokeExpr expr = (JInterfaceInvokeExpr) ((InvokeStmt) unit).getInvokeExprBox()
 								.getValue();
-						if (expr.getMethodRef().name().equals("setVariable")) {
-							// System.out.println(expr.getArgBox(0));
-							variableBlock.addProcessVariable(new ProcessVariable("setVariable", "global", "Defined"));
+						String functionName = expr.getMethodRef().name();
+						int numberOfArg = expr.getArgCount();
+						if (FunctionNames.findByNameAndNumberOfBoxes(functionName, numberOfArg) != null) {
+
+							int location = FunctionNames.findByNameAndNumberOfBoxes(functionName, numberOfArg).getLocation() - 1;
+							String type = FunctionNames.findByNameAndNumberOfBoxes(functionName, numberOfArg).getOperationType();
+							variableBlock.addProcessVariable(new ProcessVariable(expr.getArgBox(location).getValue().toString(), "global", type));
 						}
-						// if
-						// (expr.getMethod().toString().equals("setVariable")){System.out.println(expr.getArgBox(0));}
-						// System.out.println(expr);
 					}
 				}
 				if (unit instanceof AssignStmt) {
@@ -210,9 +176,13 @@ public class CFGBasicBlocksDelegateExample {
 
 						JInterfaceInvokeExpr expr = (JInterfaceInvokeExpr) ((AssignStmt) unit).getRightOpBox()
 								.getValue();
-						if (expr.getMethodRef().name().equals("getVariable")) {
-							// System.out.println(expr.getArgBox(0));
-							variableBlock.addProcessVariable(new ProcessVariable("getVariable", "global", "Used"));
+						String functionName = expr.getMethodRef().name();
+						int numberOfArg = expr.getArgCount();
+						if (FunctionNames.findByNameAndNumberOfBoxes(functionName, numberOfArg) != null) {
+
+							int location = FunctionNames.findByNameAndNumberOfBoxes(functionName, numberOfArg).getLocation() - 1;
+							String type = FunctionNames.findByNameAndNumberOfBoxes(functionName, numberOfArg).getOperationType();
+							variableBlock.addProcessVariable(new ProcessVariable(expr.getArgBox(location).getValue().toString(), "global", type));
 						}
 
 					}
@@ -224,4 +194,5 @@ public class CFGBasicBlocksDelegateExample {
 
 		return variableBlock;
 	}
+
 }

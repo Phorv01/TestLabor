@@ -8,7 +8,7 @@ import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.camunda.bpm.engine.test.ProcessEngineRule;
 
-import delegateBean.Person;
+import delegateBean.beans.Person;
 
 public class OneBlockDelegateExample implements JavaDelegate {
 
