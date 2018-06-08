@@ -47,15 +47,19 @@ public class InterProcExampleV1 {
 		Options.v().set_whole_program(true);
 		Options.v().set_allow_phantom_refs(true);
 
-		classFetcher("delegateExamples.SimpleDelegateExample", "execute");
+		classFetcher("delegateExamples.CreateCollectionDelegate", "execute");
 
 	}
 
 	public static void classFetcher(String className, String methodName) {
 
+		Options.v().setPhaseOption("jt", "use-original-names:true");
+		Options.v().set_whole_program(true);
+		Options.v().set_allow_phantom_refs(true);
 		
+		className = className.replace("/", ".");
 		
-		SootClass c = Scene.v().forceResolve("delegateExamples.SimpleDelegateExample", SootClass.SIGNATURES);
+		SootClass c = Scene.v().forceResolve(className, SootClass.SIGNATURES);
 		c.setApplicationClass();
 
 		Scene.v().loadNecessaryClasses();
@@ -69,7 +73,7 @@ public class InterProcExampleV1 {
 		List entryPoints = new ArrayList();
 		entryPoints.add(method);
 		Scene.v().setEntryPoints(entryPoints);
-		PackManager.v().runPacks();
+		PackManager.v().getPack("cg").apply();
 		CallGraph cg = Scene.v().getCallGraph();
 
 		List<Block> graphTails = g.getTails();
@@ -78,13 +82,15 @@ public class InterProcExampleV1 {
 		OutSet oldOutSet = new OutSet(0, new ArrayList<VariableBlock>());
 		OutSet newOutSet = new OutSet(0, new ArrayList<VariableBlock>());
 
-		 do {
-		 oldOutSet = newOutSet;
+//		 do {
+//		 oldOutSet = newOutSet;
 		for (Block head : graphHeads) {
 			newOutSet = graphIterator(cg, g, head, graphTails, oldOutSet);
 
 		}
-		 } while(!newOutSet.equals(oldOutSet));
+//		 } while(!newOutSet.equals(oldOutSet));
+		
+		
 	}
 
 	/**
@@ -127,6 +133,7 @@ public class InterProcExampleV1 {
 		VariableBlock variableBlock = new VariableBlock(block, new ArrayList<ProcessVariable>());
 		Set<String> packages = new HashSet<String>();
 		packages.add("delegateBean/beans/ProcessContext");
+		packages.add("delegateBean/beans/InternalProcessContext");
 
 		List<String> functions = new ArrayList<String>();
 
