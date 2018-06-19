@@ -104,7 +104,7 @@ public class CFGBasicBlocksDelegateExample {
 	public static void graphIterator(CallGraph cg, BlockGraph graph, Block head, List<Block> blockTails,
 			OutSet OutSets) {
 		
-		OutSet InSet = new OutSet(1, new ArrayList<VariableBlock>());
+		OutSet InSet = new OutSet(new ArrayList<VariableBlock>());
 		
 		for (Block b : graph.getBlocks()) {
 			
@@ -113,7 +113,7 @@ public class CFGBasicBlocksDelegateExample {
 				List<Block> predecessors = graph.getPredsOf(b);
 				for(Block p : predecessors) {
 					if(OutSets != null) {
-					InSet.addVariableBlock(OutSets.getVariableBlock(p));}
+					InSet.addVariableBlock(OutSets.getVariableBlockByBlock(p));}
 				}				
 			}			
 			

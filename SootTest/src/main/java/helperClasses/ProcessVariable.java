@@ -24,9 +24,13 @@ public class ProcessVariable {
 		  public String getScopeId() {
 		    return scopeId;
 		  }
+		  
+		  public String getOperation() {
+			  return operation;
+		  }
 
 		  public String toString() {
-		    return name + "Scope: " + scopeId;
+		    return name + " Scope: " + scopeId + " operation " + operation;
 		  }
 
 		  @Override
@@ -38,7 +42,7 @@ public class ProcessVariable {
 		  public boolean equals(final Object o) {
 		    if (o instanceof ProcessVariable) {
 		      final ProcessVariable p = (ProcessVariable) o;
-		      if (name.equals(p.getName())) {
+		      if (name.equals(p.getName()) && operation.equals(p.getOperation())) {
 		        return true;
 		      }
 		    }
